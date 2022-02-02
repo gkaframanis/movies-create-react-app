@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 
 import MoviesList from "./components/MoviesList";
 import "./App.css";
+import AddMovie from "./components/AddMovie";
 
 function App() {
 	const [movies, setMovies] = useState([]);
@@ -16,7 +17,7 @@ function App() {
 		setError(null);
 		try {
 			// By default the method is get | gets as 2nd arg a js object if needed.
-			const response = await fetch("https://swapi.dev/api/films/");
+			const response = await fetch("https://starwars-movies-react-app-default-rtdb.firebaseio.com/movies.json");
 			// The response also has a "status" field which holds the concrete response status code.
 			// We could also manually check that.
 			if (!response.ok) {
@@ -25,15 +26,18 @@ function App() {
 
 			const data = await response.json();
 
-			const transformedMovies = data.results.map(movieData => {
-				return {
-					id: movieData.episode_id,
-					title: movieData.title,
-					openingText: movieData.opening_crawl,
-					releaseDate: movieData.release_date,
-				};
-			});
-			setMovies(transformedMovies);
+			const loadedMovies = [];
+
+			for (const key in data) {
+				loadedMovies.push({
+					id: key,
+					title: data[key].title,
+					openingText: data[key].openingText,
+					releaseDate: data[key].releaseDate,
+				});
+			}
+
+			setMovies(loadedMovies);
 		} catch (error) {
 			setError(error.message);
 		}
@@ -44,6 +48,19 @@ function App() {
 	useEffect(() => {
 		fetchMoviesHandler();
 	}, [fetchMoviesHandler]);
+
+	const addMovieHandler = async movie => {
+		const response = await fetch("https://starwars-movies-react-app-default-rtdb.firebaseio.com/movies.json", {
+			method: "POST",
+			// Turn the object to JSON format.
+			body: JSON.stringify(movie),
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
+		const data = await response.json();
+		console.log(data);
+	};
 
 	// the jsx code for content outside the return function.
 	let content = <p>Found no movies...</p>;
@@ -62,6 +79,9 @@ function App() {
 
 	return (
 		<React.Fragment>
+			<section>
+				<AddMovie onAddMovie={addMovieHandler} />
+			</section>
 			<section>
 				<button onClick={fetchMoviesHandler}>Fetch Movies</button>
 			</section>
