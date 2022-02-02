@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import MoviesList from "./components/MoviesList";
 import "./App.css";
@@ -8,7 +8,9 @@ function App() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
 
-	const fetchMovieHandler = async () => {
+	// Using useCallback() so the useEffect() doesn't fall in a infinite loop, since in every rerender
+	// the pointer to the function changes!!!
+	const fetchMoviesHandler = useCallback(async () => {
 		setIsLoading(true);
 		// To clear any errors we might had.
 		setError(null);
@@ -36,7 +38,12 @@ function App() {
 			setError(error.message);
 		}
 		setIsLoading(false);
-	};
+	}, []);
+
+	// Runs only when it loads for the first time.
+	useEffect(() => {
+		fetchMoviesHandler();
+	}, [fetchMoviesHandler]);
 
 	// the jsx code for content outside the return function.
 	let content = <p>Found no movies...</p>;
@@ -56,7 +63,7 @@ function App() {
 	return (
 		<React.Fragment>
 			<section>
-				<button onClick={fetchMovieHandler}>Fetch Movies</button>
+				<button onClick={fetchMoviesHandler}>Fetch Movies</button>
 			</section>
 			<section>{content}</section>
 		</React.Fragment>
